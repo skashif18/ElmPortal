@@ -1,0 +1,41 @@
+﻿@using Microsoft.AspNetCore.Components.Authorization
+@inherits LayoutComponentBase
+
+<div class="page">
+
+    <div class="sidebar">
+        <AuthorizeView>
+            <Authorized>
+                <NavMenu />
+            </Authorized>
+        </AuthorizeView>
+
+    </div>
+
+    <main>
+        <div class="top-row px-4">
+
+            <LoginDisplay></LoginDisplay>
+        </div>
+
+        <article class="content px-4">
+
+            <AuthorizeView>
+                <NotAuthorized>
+                    <h1> Not Authorized</h1>
+                </NotAuthorized>
+                <Authorized>
+                    @Body
+                </Authorized>
+            </AuthorizeView>
+        </article>
+    </main>
+</div>
+
+<BlazoredToasts Position="ToastPosition.BottomRight"
+                Timeout="10"
+                IconType="IconType.FontAwesome"
+                ErrorIcon="error_outline"
+                InfoIcon="school"
+                SuccessIcon="done_outline"
+                WarningIcon="warning" />

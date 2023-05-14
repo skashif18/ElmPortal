@@ -1,0 +1,69 @@
+﻿@page "/employee-leave/edit/{Id}"
+@attribute [Authorize(Roles = "Employee")]
+@inject NavigationManager NavigationManager
+@inject IGenericRepository<EmployeeLeave> repository;
+@inject IToastService toastService
+
+<h3>Edit EmployeeLeave</h3>
+
+@if (employeeLeave != null)
+{
+    <EditForm Model="employeeLeave" OnValidSubmit="OnValidSumit">
+        <DataAnnotationsValidator></DataAnnotationsValidator>
+        <ValidationSummary></ValidationSummary>
+
+        <div class="form-group">
+            <label for="reason">Reason </label>
+            <InputText id="reason" disabled="@IsApproved" @bind-Value="employeeLeave.Reason" class="form-control"></InputText>
+        </div>
+        <button type="submit" class="btn btn-primary">Save</button>
+        <button type="button" class="btn btn-danger" @onclick="OnCancel">Cancel</button>
+    </EditForm>
+
+}
+
+
+@code {
+    [Parameter]
+    public string Id { get; set; }
+    private EmployeeLeave employeeLeave;
+    private bool IsApproved = false;
+    protected override void OnInitialized()
+    {
+        base.OnInitialized();
+
+        employeeLeave = new EmployeeLeave();
+    }
+
+    protected override void OnParametersSet()
+    {
+        base.OnParametersSet();
+
+        if (int.TryParse(this.Id, out int iId))
+        {
+            var val = repository.GetById(iId);
+            this.employeeLeave = val;
+            IsApproved = (val.StatusId == 2 || val.StatusId == 3 ? true : false);
+        }
+    }
+
+    private void OnValidSumit()
+    {
+        var result = repository.Update(employeeLeave);
+
+        if (result.IsSuccess)
+        {
+            toastService.ShowSuccess(result.Message);
+            NavigationManager.NavigateTo("/employee-leave");
+        }
+        else
+        {
+            toastService.ShowError(result.Message);
+        }
+    }
+
+    private void OnCancel()
+    {
+        NavigationManager.NavigateTo("/employee-leave");
+    }
+}

@@ -1,0 +1,164 @@
+﻿@page "/employee-leave/view/{Id}"
+@using CoreBusiness;
+@using WebApp.Data;
+@attribute [Authorize(Roles = "Employee,Manager")]
+@inject NavigationManager NavigationManager
+@inject IToastService toastService
+
+@inject IGenericRepository<EmployeeLeave> repository
+@inject IGenericRepository<Employee> employeerepository
+@inject IGenericRepository<Status> status_repository
+
+<h3>Details </h3>
+
+@if (employeeLeave != null)
+{
+    <div class="card">
+        <div class="card-header">
+            Requester : @employeerepository.GetById(employeeLeave.Id)?.Name
+        </div>
+        <div class="card-body">
+            <h3>Reason : @employeeLeave.Reason </h3>
+            <p> @employeeLeave.Comment </p>
+            <i>Ststus: @GetStatusName(employeeLeave.StatusId)</i>
+        </div>
+
+        <div class="card-footer">
+
+            @if (employeeLeave.StatusId == (int)ActionTypeEnum.Approved)
+            {
+
+
+                <div class="alert alert-success" role="alert">
+                    <p> Approved by @employeeLeave.LastUpdateUserName on @employeeLeave.LastUpdateDate</p>
+                </div>
+            }
+            else
+            {
+                if (employeeLeave.StatusId == (int)ActionTypeEnum.Pending)
+                {
+
+                    <AuthorizeView Roles="@RolesEnum.Manager.ToString()">
+                        <button type="button" class="btn btn-success" @onclick="Approve"> Approve </button>
+                    </AuthorizeView>
+                }
+            }
+
+            @if (employeeLeave.StatusId == (int)ActionTypeEnum.Reject)
+            {
+                <p class="bg-danger text-white"> Rejected  by @employeeLeave.LastUpdateUserName on @employeeLeave.LastUpdateDate</p>
+            }
+
+            else
+            {
+                if (employeeLeave.StatusId == (int)ActionTypeEnum.Pending)
+                {
+                    <AuthorizeView Roles="@RolesEnum.Manager.ToString()">
+                        <button type="button" class="btn btn-danger" @onclick="Reject"> Reject </button>
+                    </AuthorizeView>
+                }
+            }
+
+            <AuthorizeView Roles="@RolesEnum.Manager.ToString()">
+                <button type="button" class="btn btn-warning" @onclick="OnCancelManager">Back</button>
+            </AuthorizeView>
+
+            <AuthorizeView Roles="@RolesEnum.Employee.ToString()">
+                <button type="button" class="btn btn-warning" @onclick="OnCancel">Back</button>
+            </AuthorizeView>
+
+        </div>
+    </div>
+
+}
+@code {
+
+    [Parameter]
+    public string Id { get; set; }
+    private EmployeeLeave employeeLeave;
+    private bool IsApproved = false;
+    protected override void OnInitialized()
+    {
+        base.OnInitialized();
+
+        employeeLeave = new EmployeeLeave();
+    }
+
+
+
+    private void OnValidSumit()
+    {
+        var result = repository.Update(employeeLeave);
+
+        if (result.IsSuccess)
+        {
+            toastService.ShowSuccess(result.Message);
+            NavigationManager.NavigateTo("/employee-leave");
+        }
+        else
+        {
+            toastService.ShowError(result.Message);
+        }
+    }
+
+    private void Approve()
+    {
+
+        employeeLeave.StatusId = 2;
+        var result = repository.Update(employeeLeave);
+        if (result.IsSuccess)
+        {
+            toastService.ShowSuccess(result.Message);
+            NavigationManager.NavigateTo("/employee/leave-request");
+        }
+        else
+        {
+            toastService.ShowError(result.Message);
+        }
+    }
+
+    private void Reject()
+    {
+
+        employeeLeave.StatusId = 3;
+        var result = repository.Update(employeeLeave);
+        if (result.IsSuccess)
+        {
+            toastService.ShowSuccess(result.Message);
+            NavigationManager.NavigateTo("/employee/leave-request");
+        }
+        else
+        {
+            toastService.ShowError(result.Message);
+        }
+    }
+
+    private string GetStatusName(int Id)
+    {
+        return status_repository.GetById(Id)?.NameEn;
+    }
+
+
+    protected override void OnParametersSet()
+    {
+        base.OnParametersSet();
+
+        if (int.TryParse(this.Id, out int iId))
+        {
+            var val = repository.GetById(iId);
+            this.employeeLeave = val;
+            IsApproved = (val.StatusId == 2 || val.StatusId == 3 ? true : false);
+        }
+    }
+    private void OnCancel()
+    {
+        NavigationManager.NavigateTo("/employee-leave");
+    }
+
+    private void OnCancelManager()
+    {
+        NavigationManager.NavigateTo("/employee/leave-request");
+    }
+
+
+}

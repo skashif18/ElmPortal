@@ -1,0 +1,115 @@
+﻿@page "/employee-leave"
+@using CoreBusiness;
+@using WebApp.Data;
+@attribute [Authorize(Roles = "Employee,Manager")]
+@inject NavigationManager NavigationManager
+@inject IToastService toastService
+
+
+@inject ICurrentUserServiceDB current;
+@inject IGenericRepository<EmployeeLeave> repository
+@inject IGenericRepository<Status> status_repository
+
+<h3>Vacation Request </h3>
+
+@if (EmployeeLeave != null)
+{
+    <table class="table">
+        <thead>
+            <tr>
+                <th>Id</th>
+                <th>Reason</th>
+                <th>Status </th>
+                <th></th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var item in EmployeeLeave)
+            {
+                <tr>
+                    <td>@item.Id</td>
+                    <td>@item.Reason</td>
+                    <td>@GetStatusName(item.StatusId)</td>
+                    <td>
+                        <button type="button" @onclick="@(() => ViewEmployeeLeave(item))" class="btn btn-link"><i class="bi bi-0-circle"></i> View</button>
+                        <AuthorizeView Roles="Employee">
+
+                            @if (item.StatusId == (int)ActionTypeEnum.Pending)
+                            {
+                                <button type="button" @onclick="@(() => EditEmployeeLeave(item))" class="btn btn-link">Edit</button>
+                                <button type="button" @onclick="@(() => Delete(item.Id))" class="btn btn-link">Delete</button>
+                            }
+                        </AuthorizeView>
+
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}
+<br />
+<AuthorizeView Roles="Employee">
+    <button type="button" @onclick="OnClickAddEmployeeLeave" class="btn btn-primary">Request a vacation</button>
+</AuthorizeView>
+
+
+
+@code {
+
+    private IdNameModel Manager;
+    private IEnumerable<EmployeeLeave> EmployeeLeave;
+
+
+    protected override void OnInitialized()
+    {
+        base.OnInitialized();
+        LoadList();
+    }
+
+    private void OnClickAddEmployeeLeave()
+    {
+        NavigationManager.NavigateTo("/employee-leave/add");
+    }
+
+    private void EditEmployeeLeave(EmployeeLeave model)
+    {
+        NavigationManager.NavigateTo($"/employee-leave/edit/{model.Id}");
+    }
+
+    private void ViewEmployeeLeave(EmployeeLeave model)
+    {
+        NavigationManager.NavigateTo($"/employee-leave/view/{model.Id}");
+    }
+
+
+
+    private string GetStatusName(int Id)
+    {
+        return status_repository.GetById(Id)?.NameEn;
+    }
+
+
+    private void Delete(int Id)
+    {
+        var result = repository.Delete(Id);
+        if (result.IsSuccess)
+        {
+            toastService.ShowSuccess(result.Message);
+        }
+        else
+        {
+            toastService.ShowError(result.Message);
+
+        }
+
+        LoadList();
+    }
+
+
+    private void LoadList()
+    {
+        EmployeeLeave = repository.GetAll()?
+                                  .Where(m => !m.IsDeleted && m.CreationUserName == current.GetUserName())
+                                  .ToList();
+    }
+}

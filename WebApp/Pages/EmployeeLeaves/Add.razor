@@ -1,0 +1,63 @@
+﻿@page "/employee-leave/add"
+@using UseCases.DataStorePluginInterfaces;
+
+@attribute [Authorize(Roles = "Employee")]
+@inject NavigationManager NavigationManager
+@inject IGenericRepository<EmployeeLeave> repository;
+@inject IToastService toastService
+@inject ICurrentUserServiceDB current;
+@inject IEmployeeLeaveRepository empleave;
+<h3>Request a Vacation</h3>
+
+@if (employeeLeave != null)
+{
+    <EditForm Model="employeeLeave" OnValidSubmit="OnValidSumit">
+        <DataAnnotationsValidator></DataAnnotationsValidator>
+        <ValidationSummary></ValidationSummary>
+
+        <div class="form-group">
+            <label for="reason">Reason </label>
+            <InputText id="reason" @bind-Value="employeeLeave.Reason" class="form-control"></InputText>
+        </div>
+
+        <button type="submit" class="btn btn-primary">Save</button>
+        <button type="button" class="btn btn-primary" @onclick="OnCancel">Cancel</button>
+    </EditForm>
+
+}
+
+
+@code {
+    private EmployeeLeave employeeLeave;
+
+    private IEnumerable<IdNameModel> IdName;
+    private string email;
+    protected override void OnInitialized()
+    {
+        base.OnInitialized();
+
+        employeeLeave = new EmployeeLeave();
+
+    }
+    private void OnValidSumit()
+    {
+
+        employeeLeave.EmployeeId = empleave.GetEmployeeId(current.GetUserName());
+        employeeLeave.StatusId = 1;
+        var result = repository.Create(employeeLeave);
+        if (result.IsSuccess)
+        {
+            toastService.ShowSuccess(result.Message);
+            NavigationManager.NavigateTo("/employee-leave");
+        }
+        else
+        {
+            toastService.ShowError(result.Message);
+        }
+    }
+
+    private void OnCancel()
+    {
+        NavigationManager.NavigateTo("/employee-leave");
+    }
+}

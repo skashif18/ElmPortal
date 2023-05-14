@@ -1,0 +1,96 @@
+﻿@page "/employee"
+@attribute [Authorize(Roles = "Admin")]
+@inject NavigationManager NavigationManager
+@inject IToastService toastService
+
+@inject IGenericRepository<Employee> employeeRepository
+
+<h3>Manage Employee</h3>
+
+@if (Employee != null)
+{
+
+    <table class="table">
+        <thead>
+            <tr>
+                <th>Id</th>
+                <th>Name</th>
+                <th>Designation </th>
+                <th>Email </th>
+                <th>Is Manager </th>
+                <th>Manager Name</th>
+                <th></th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var item in Employee)
+            {
+                <tr>
+                    <td>@item.Id</td>
+                    <td>@item.Name</td>
+                    <td>@item.Designation</td>
+                    <td>@item.Email</td>
+                    <td>@(item.IsManager ? "Yes" : "No")</td>
+                    <td>@(item.ManagerId > 0 ? GetManagerName(item.ManagerId.Value) : "N/A")</td>
+                    <td>
+                        <button type="button" @onclick="@(() => EditEmployee(item))" class="btn btn-link">Edit</button>
+                        <button type="button" @onclick="@(() => Delete(item.Id))" class="btn btn-link">Delete</button>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}
+<br />
+<button type="button" @onclick="OnClickAddEmployee" class="btn btn-primary">Add Employee</button>
+
+
+
+@code {
+
+    private IdNameModel Manager;
+    private IEnumerable<Employee> Employee;
+
+
+    protected override void OnInitialized()
+    {
+        base.OnInitialized();
+        LoadList();
+    }
+
+    private void OnClickAddEmployee()
+    {
+        NavigationManager.NavigateTo("/employee/add");
+    }
+
+    private void EditEmployee(Employee model)
+    {
+        NavigationManager.NavigateTo($"/employee/edit/{model.Id}");
+    }
+
+    private void Delete(int Id)
+    {
+        var result = employeeRepository.Delete(Id);
+        if (result.IsSuccess)
+        {
+            toastService.ShowSuccess(result.Message);
+        }
+        else
+        {
+            toastService.ShowError(result.Message);
+
+        }
+
+        LoadList();
+    }
+
+
+    private string GetManagerName(int Id)
+    {
+        return employeeRepository.GetById(Id).Name;
+    }
+    private void LoadList()
+    {
+        Employee = employeeRepository.GetAll()?.Where(m=>!m.IsDeleted).ToList();
+    }
+}

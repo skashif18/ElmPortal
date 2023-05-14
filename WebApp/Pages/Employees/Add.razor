@@ -1,0 +1,112 @@
+﻿@page "/Employee/add"
+@attribute [Authorize(Roles = "Admin")]
+@inject NavigationManager NavigationManager
+@inject IGenericRepository<Employee> repository;
+@inject IToastService toastService
+@inject UserManager<IdentityUser> _userManager;
+<h3>Add Employee</h3>
+
+@if (Employee != null)
+{
+    <EditForm Model="Employee" OnValidSubmit="OnValidSumit">
+        <DataAnnotationsValidator></DataAnnotationsValidator>
+        <ValidationSummary></ValidationSummary>
+
+        <div class="form-group">
+            <label for="name">Name</label>
+            <InputText id="name" @bind-Value="Employee.Name" class="form-control"></InputText>
+        </div>
+        <div class="form-group">
+            <label for="designation">Designation</label>
+            <InputText id="designation" @bind-Value="Employee.Designation" class="form-control"></InputText>
+        </div>
+
+        <div class="form-group">
+            <label for="email">Email</label>
+            <InputText id="email" @bind-Value="Employee.Email" class="form-control"></InputText>
+        </div>
+
+
+        <div class="form-group">
+            <label for="IsManager">IsManager</label>
+            <InputCheckbox id="IsManager" @bind-Value="Employee.IsManager" class="form-control"></InputCheckbox>
+        </div>
+
+       
+            <div class="form-group">
+                <label for="managerid">Manager Id</label>
+
+                <InputSelect id="managerid" @bind-Value="Employee.ManagerId" class="form-control">
+                    <option value="0">Select Manager</option>
+                    @foreach (var item in Employees)
+                    {
+                        <option value="@item.Id">@item.Name</option>
+                    }
+                </InputSelect>
+            </div>
+
+       
+
+
+        <button type="submit" class="btn btn-primary">Save</button>
+        <button type="button" class="btn btn-primary" @onclick="OnCancel">Cancel</button>
+    </EditForm>
+
+}
+
+
+@code {
+    private Employee Employee;
+
+    private IEnumerable<IdNameModel> IdName;
+    private bool IsManager = false;
+    private List<Employee> Employees;
+
+    protected override void OnInitialized()
+    {
+        base.OnInitialized();
+        GetManagers();
+        Employee = new Employee();
+    }
+
+
+    private void OnValidSumit()
+    {
+        var result = repository.Create(Employee);
+
+        if (result.IsSuccess)
+        {
+            var role = (Employee.IsManager ? "Manager" : "Employee");
+            CreateAspUser(Employee.Email, "Welcome@1", role);
+
+            toastService.ShowSuccess(result.Message);
+            NavigationManager.NavigateTo("/employee");
+        }
+        else
+        {
+            toastService.ShowError(result.Message);
+        }
+    }
+
+
+    private async void CreateAspUser(string email, string password, string role)
+    {
+        var user = new IdentityUser { UserName = email, Email = email };
+        var result = await _userManager.CreateAsync(user, password);
+
+        var roleresult = await _userManager.AddToRoleAsync(user, role);
+    }
+
+    private void OnCancel()
+    {
+        NavigationManager.NavigateTo("/employee");
+    }
+
+    private void GetManagers()
+    {
+        Employees = repository.GetAll().Where(m => m.IsManager).ToList();
+
+    }
+
+
+}

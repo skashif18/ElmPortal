@@ -1,0 +1,80 @@
+﻿@page "/Nationality"
+@attribute [Authorize(Policy ="AdminOnly")]
+@inject NavigationManager NavigationManager
+@inject IToastService toastService
+
+@inject INationalityRepository objNationality
+
+<h3>Manage Nationality</h3>
+
+@if (nationalities != null)
+{
+
+    <table class="table">
+        <thead>
+            <tr>
+                <th>Name En</th>
+                <th>Name Ar</th>
+                <th></th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var item in nationalities)
+            {
+                <tr>
+                    <td>@item.NameEn</td>
+                    <td>@item.NameAr</td>
+                    <td>
+                        <button type="button" @onclick="@(() => EditNationality(item))" class="btn btn-link">Edit</button>
+                         <button type="button" @onclick="@(() => Delete(item.Id))" class="btn btn-link">Delete</button>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}
+<br />
+<button type="button" @onclick="OnClickAddNationality" class="btn btn-primary">Add Nationality</button>
+
+
+
+@code {
+    private IEnumerable<SysNationality> nationalities;
+
+    protected override void OnInitialized()
+    {
+        base.OnInitialized();
+        LoadList();
+    }
+
+    private void OnClickAddNationality()
+    {
+        NavigationManager.NavigateTo("/AddNationality");
+    }
+
+    private void EditNationality(SysNationality nationality)
+    {
+        NavigationManager.NavigateTo($"/editNationality/{nationality.Id}");
+    }
+
+    private void Delete(int Id)
+    {
+        var v = objNationality.Delete(Id);
+        if (v.IsSuccess)
+        {
+            toastService.ShowSuccess(v.Message);
+        }
+        else
+        {
+            toastService.ShowError(v.Message);
+
+         }
+        
+        LoadList();
+    }
+
+    private void LoadList()
+    {
+        nationalities = objNationality.GetAll()?.ToList();
+    }
+}

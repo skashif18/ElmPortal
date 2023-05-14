@@ -1,0 +1,106 @@
+﻿@page "/employee/edit/{Id}"
+@attribute [Authorize(Roles = "Admin")]
+@inject NavigationManager NavigationManager
+@inject IGenericRepository<Employee> repository;
+@inject IToastService toastService
+
+<h3>Edit Employee</h3>
+
+@if (Employee != null)
+{
+    <EditForm Model="Employee" OnValidSubmit="OnValidSumit">
+        <DataAnnotationsValidator></DataAnnotationsValidator>
+        <ValidationSummary></ValidationSummary>
+
+        <div class="form-group">
+            <label for="name">Name</label>
+            <InputText id="name" @bind-Value="Employee.Name" class="form-control"></InputText>
+        </div>
+        <div class="form-group">
+            <label for="designation">Designation</label>
+            <InputText id="designation" @bind-Value="Employee.Designation" class="form-control"></InputText>
+        </div>
+
+        <div class="form-group">
+            <label for="email">Email</label>
+            <InputText id="email" @bind-Value="Employee.Email" class="form-control"></InputText>
+        </div>
+
+
+        <div class="form-group">
+            <label for="IsManager">IsManager</label>
+            <InputCheckbox id="IsManager" @bind-Value="Employee.IsManager" class="form-control"></InputCheckbox>
+        </div>
+
+
+        <div class="form-group">
+            <label for="managerid">Manager Id</label>
+            <InputSelect id="managerid" @bind-Value="Employee.ManagerId" class="form-control">
+                <option value="0">Select Manager</option>
+                @foreach (var item in Employees)
+                {
+                    <option value="@item.Id">@item.Name</option>
+                }
+            </InputSelect>
+        </div>
+
+        <button type="submit" class="btn btn-primary">Save</button>
+        <button type="button" class="btn btn-primary" @onclick="OnCancel">Cancel</button>
+    </EditForm>
+
+}
+
+
+@code {
+    [Parameter]
+    public string Id { get; set; }
+    private Employee Employee;
+    private List<Employee> Employees;
+
+    protected override void OnInitialized()
+    {
+        base.OnInitialized();
+
+        Employee = new Employee();
+        GetManagers();
+    }
+
+    protected override void OnParametersSet()
+    {
+        base.OnParametersSet();
+
+        if (int.TryParse(this.Id, out int iId))
+        {
+            var val = repository.GetById(iId);
+            this.Employee = val;
+        }
+    }
+
+    private void OnValidSumit()
+    {
+        var result = repository.Update(Employee);
+
+        if (result.IsSuccess)
+        {
+            toastService.ShowSuccess(result.Message);
+            NavigationManager.NavigateTo("/employee");
+        }
+        else
+        {
+            toastService.ShowError(result.Message);
+        }
+    }
+
+    
+    private void GetManagers()
+    {
+        Employees = repository.GetAll().Where(m => m.IsManager).ToList();
+
+    }
+
+
+    private void OnCancel()
+    {
+        NavigationManager.NavigateTo("/employee");
+    }
+}

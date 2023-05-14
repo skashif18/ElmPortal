@@ -1,0 +1,60 @@
+﻿@page "/status/add"
+@attribute [Authorize (Roles ="Admin")]
+@inject NavigationManager NavigationManager
+@inject IGenericRepository<Status> repository;
+@inject IToastService toastService
+
+<h3>Add Status</h3>
+
+@if (Status != null)
+{
+    <EditForm Model="Status" OnValidSubmit="OnValidSumit">
+        <DataAnnotationsValidator></DataAnnotationsValidator>
+        <ValidationSummary></ValidationSummary>
+
+        <div class="form-group">
+            <label for="name">Name En</label>
+            <InputText id="nameen" @bind-Value="Status.NameEn" class="form-control"></InputText>
+        </div>
+        <div class="form-group">
+            <label for="namear">Name Ar</label>
+            <InputText id="namear" @bind-Value="Status.NameAr" class="form-control"></InputText>
+        </div>
+        <button type="submit" class="btn btn-primary">Save</button>
+        <button type="button" class="btn btn-primary" @onclick="OnCancel">Cancel</button>
+        <button class="btn btn-info" @onclick="@(() => toastService.ShowInfo("I'm an INFO message"))">Info Toast</button>
+    </EditForm>
+
+}
+
+
+@code {
+    private Status Status;
+
+    protected override void OnInitialized()
+    {
+        base.OnInitialized();
+
+        Status = new Status();
+    }
+
+    private void OnValidSumit()
+    {
+        var result = repository.Create(Status);
+
+        if (result.IsSuccess)
+        {
+            toastService.ShowSuccess(result.Message);
+            NavigationManager.NavigateTo("/Status");
+        }
+        else
+        {
+            toastService.ShowError(result.Message);
+        }
+    }
+
+    private void OnCancel()
+    {
+        NavigationManager.NavigateTo("/Status");
+    }
+}

@@ -1,0 +1,31 @@
+﻿@page "/"
+@using Syncfusion.Blazor.DropDowns
+@using System.Collections.Specialized
+@using System.Collections
+
+<h3>Dashbord</h3>
+
+
+<AuthorizeView Roles="Employee">
+
+</AuthorizeView>
+
+<AuthorizeView Roles="Manager">
+
+</AuthorizeView>
+
+
+
+@code {
+
+    protected override void OnInitialized()
+    {
+        base.OnInitialized();
+        LoadList();
+
+    }
+    private void LoadList()
+    {
+       
+    }
+}

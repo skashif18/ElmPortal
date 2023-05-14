@@ -1,0 +1,9 @@
+﻿@page "/City/{CountryId:int}"
+<h3>City of @CountryId</h3>
+
+@code {
+
+    [Parameter]
+    public int CountryId { get; set; }
+
+}

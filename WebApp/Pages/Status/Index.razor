@@ -1,0 +1,82 @@
+﻿@page "/status"
+@attribute [Authorize (Roles ="Admin")]
+@inject NavigationManager NavigationManager
+@inject IToastService toastService
+
+@inject IGenericRepository<Status> repository
+
+<h3>Manage Status</h3>
+
+@if (Status != null)
+{
+
+    <table class="table">
+        <thead>
+            <tr>
+                <th>Name En</th>
+                <th>Name Ar</th>
+                <th></th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var item in Status)
+            {
+                <tr>
+                    <td>@item.NameEn</td>
+                    <td>@item.NameAr</td>
+                    <td>
+                        <button type="button" @onclick="@(() => EditStatus(item))" class="btn btn-link">Edit</button>
+                        <button type="button" @onclick="@(() => Delete(item.Id))" class="btn btn-link">Delete</button>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}
+<br />
+<button type="button" @onclick="OnClickAddStatus" class="btn btn-primary">Add Status</button>
+
+
+
+@code {
+    private IEnumerable<Status> Status;
+
+    protected override void OnInitialized()
+    {
+        base.OnInitialized();
+        LoadList();
+    }
+
+    private void OnClickAddStatus()
+    {
+        NavigationManager.NavigateTo("/status/add");
+    }
+
+    private void EditStatus(Status model)
+    {
+        NavigationManager.NavigateTo($"/status/edit/{model.Id}");
+    }
+
+    private void Delete(int Id)
+    {
+        var result = repository.Delete(Id);
+        if (result.IsSuccess)
+        {
+            toastService.ShowSuccess(result.Message);
+        }
+        else
+        {
+            toastService.ShowError(result.Message);
+
+        }
+
+        LoadList();
+    }
+
+
+
+    private void LoadList()
+    {
+        Status = repository.GetAll()?.ToList();
+    }
+}
